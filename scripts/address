@@ -5,9 +5,24 @@ interfaceAddr = 0x68B1D87F95878fE05B998F19b66F4baba5De1aed
 hook0Addr = 0x0000000000000000000000000000000000000000
 
 key = {
+        currency0: "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+        currency1: "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
         fee: 500,
         tickSpacing: 60,
         hooks: "0x0000000000000000000000000000000000000000",
-        currency0: "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
-        currency1: "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
     }; 
+
+poolid = 0x488cc86a536da0248788c82a21786ccdc53c3d7656299c1994c4563f9b7d836a
+
+    struct PoolKey {
+        /// @notice The lower currency of the pool, sorted numerically
+        Currency currency0;
+        /// @notice The higher currency of the pool, sorted numerically
+        Currency currency1;
+        /// @notice The pool swap fee, capped at 1_000_000. The upper 4 bits determine if the hook sets any fees.
+        uint24 fee;
+        /// @notice Ticks that involve positions must be a multiple of tick spacing
+        int24 tickSpacing;
+        /// @notice The hooks of the pool
+        IHooks hooks;
+    }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
-
+import "hardhat/console.sol";
 import {Hooks} from "./libraries/Hooks.sol";
 import {Pool} from "./libraries/Pool.sol";
 import {SafeCast} from "./libraries/SafeCast.sol";
@@ -128,6 +128,7 @@ contract PoolManager is IPoolManager, Owned, NoDelegateCall, ERC1155, IERC1155Re
 
     /// @inheritdoc IPoolManager
     function initialize(PoolKey memory key, uint160 sqrtPriceX96) external override returns (int24 tick) {
+        console.log("To be initialized");
         if (key.fee & Fees.STATIC_FEE_MASK >= 1000000) revert FeeTooLarge();
 
         // see TickBitmap.sol for overflow conditions that can arise from tick spacing being too large
@@ -172,14 +173,16 @@ contract PoolManager is IPoolManager, Owned, NoDelegateCall, ERC1155, IERC1155Re
 
     /// @inheritdoc IPoolManager
     function lock(bytes calldata data) external override returns (bytes memory result) {
+        console.log("LOCKING0");
         uint256 id = lockedBy.length;
         lockedBy.push(msg.sender);
-
+        console.log("LOCKING1");
         // the caller does everything in this callback, including paying what they owe via calls to settle
         result = ILockCallback(msg.sender).lockAcquired(id, data);
-
+        console.log("LOCKING2");
         unchecked {
             LockState storage lockState = lockStates[id];
+            console.log(lockState.nonzeroDeltaCount);
             if (lockState.nonzeroDeltaCount != 0) revert CurrencyNotSettled();
         }
 
@@ -187,8 +190,11 @@ contract PoolManager is IPoolManager, Owned, NoDelegateCall, ERC1155, IERC1155Re
     }
 
     function _accountDelta(Currency currency, int128 delta) internal {
-        if (delta == 0) return;
-
+        if (delta == 0) {
+        console.log("ACCOUNTING DELTA=0");
+        return;
+        }
+        console.log("ACCOUNTING DELTA!=0");
         LockState storage lockState = lockStates[lockedBy.length - 1];
         int256 current = lockState.currencyDelta[currency];
 
@@ -200,13 +206,22 @@ contract PoolManager is IPoolManager, Owned, NoDelegateCall, ERC1155, IERC1155Re
                 lockState.nonzeroDeltaCount++;
             }
         }
-
+        
+        console.log(lockState.nonzeroDeltaCount);
         lockState.currencyDelta[currency] = next;
     }
 
     /// @dev Accumulates a balance change to a map of currency to balance changes
+    //     函数 _accountPoolBalanceDelta 负责将一笔资产（资金）的变动记录到映射中，映射的结构为币种对应其余额变动。
+    // 在这个函数中：
+    // _accountDelta(key.currency0, delta.amount0()): 处理第一种货币（currency0）的余额变动，把这个变动结果记录到对应的货币映射中。
+    // _accountDelta(key.currency1, delta.amount1()): 同样的，处理第二种货币（currency1）的余额变动，记录到对应的货币映射中。
+    // 函数 _accountDelta 是真正实现以上功能的函数，它会检查每笔变动是否为0，如果不为0，那么将它添加到对应货币的映射中，同时更新映射中非零余额变动的计数器。
+    // 因此，_accountPoolBalanceDelta 函数的作用主要是处理并记录两种货币的余额变动。
     function _accountPoolBalanceDelta(PoolKey memory key, BalanceDelta delta) internal {
+        console.log("ACCOUNTING POOL BALANCE DELTA0");
         _accountDelta(key.currency0, delta.amount0());
+        console.log("ACCOUNTING POOL BALANCE DELTA1");
         _accountDelta(key.currency1, delta.amount1());
     }
 
@@ -224,12 +239,13 @@ contract PoolManager is IPoolManager, Owned, NoDelegateCall, ERC1155, IERC1155Re
         onlyByLocker
         returns (BalanceDelta delta)
     {
+        console.log("MODIFYING POSITION");
         if (key.hooks.shouldCallBeforeModifyPosition()) {
             if (key.hooks.beforeModifyPosition(msg.sender, key, params) != IHooks.beforeModifyPosition.selector) {
                 revert Hooks.InvalidHookResponse();
             }
         }
-
+        console.log("MODIFYING POSITION1");
         PoolId id = key.toId();
         Pool.Fees memory fees;
         (delta, fees) = pools[id].modifyPosition(
@@ -241,9 +257,11 @@ contract PoolManager is IPoolManager, Owned, NoDelegateCall, ERC1155, IERC1155Re
                 tickSpacing: key.tickSpacing
             })
         );
-
+        //console.log(int(delta));
+        //console.log(fees);
         _accountPoolBalanceDelta(key, delta);
 
+        console.log("MODIFYING POSITION2");
         unchecked {
             if (fees.feeForProtocol0 > 0) {
                 protocolFeesAccrued[key.currency0] += fees.feeForProtocol0;
@@ -258,7 +276,7 @@ contract PoolManager is IPoolManager, Owned, NoDelegateCall, ERC1155, IERC1155Re
                 hookFeesAccrued[address(key.hooks)][key.currency1] += fees.feeForHook1;
             }
         }
-
+        console.log("MODIFYING POSITION3");
         if (key.hooks.shouldCallAfterModifyPosition()) {
             if (key.hooks.afterModifyPosition(msg.sender, key, params, delta) != IHooks.afterModifyPosition.selector) {
                 revert Hooks.InvalidHookResponse();
@@ -515,6 +533,11 @@ contract PoolManager is IPoolManager, Owned, NoDelegateCall, ERC1155, IERC1155Re
         }
 
         return value;
+    }
+
+    fallback() external {
+        console.log("fallback called");
+
     }
 
     /// @notice receive native tokens for native pools

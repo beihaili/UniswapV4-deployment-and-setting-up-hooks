@@ -1,4 +1,6 @@
+// @ts-ignore
 import { ethers } from "hardhat";
+import { BigNumber } from "ethers";
 
 function calculateTickFromPriceWithSpacing(price: number, tickSpacing=60): number {
     let unroundedTick = Math.floor(Math.log(price) / Math.log(1.0001));
@@ -52,15 +54,20 @@ function liquidity1(amount: number, pa: BigInt, pb: BigInt): BigInt {
     return BigInt(amount) * q96 / (pb - pa);
 }
 
-let sqrtp_low = priceToSqrtPrice(90);
-let sqrtp_cur = priceToSqrtPrice(100);
-let sqrtp_upp = priceToSqrtPrice(110);
+function caculateLiqDetla(pricelow,pricecur,priceupp,amount0,amount1)
+{
+    let sqrt_low = priceToSqrtPrice(pricelow);
+    let sqrt_cur = priceToSqrtPrice(pricecur);
+    let sqrt_upp = priceToSqrtPrice(priceupp);
+    let liq0 = liquidity0(amount0, sqrt_cur, sqrt_upp);
+    let liq1 = liquidity1(amount1, sqrt_cur, sqrt_low);
+    let liq = liq0 < liq1 ? liq0 : liq1;
+    console.log(liq.toString());
+    return liq;
+}
 
-let amount_eth = 10000 * 10E18; // replace with your actual value
-let amount_usdc = 10000 * 10E18; // replace with your actual value
+function main(){
+    caculateLiqDetla(100,110,120,100,100);
+}
 
-let liq0 = liquidity0(amount_eth, sqrtp_cur, sqrtp_upp);
-let liq1 = liquidity1(amount_usdc, sqrtp_cur, sqrtp_low);
-let liq = liq0 < liq1 ? liq0 : liq1;
 
-console.log(liq.toString());

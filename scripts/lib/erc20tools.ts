@@ -11,7 +11,7 @@ let wallet = new ethers.Wallet("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5e
 //console.log(`My address: ${wallet.address}`);
 
 // 你的ERC20合约地址
-const tokenAddress = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6";
+const tokenAddress = "0x9A676e781A523b5d0C0e43731313A708CB607508";
 //const tokenAddress = "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318";
 
 // 定义合约接口
@@ -34,20 +34,20 @@ async function checkAllowance(contract:Contract, ownerAddress: string, spenderAd
     console.log(`Allowance: ${allowance.toString()}`);
 }
 
-async function getERC20Balance(address: string) {
+async function getERC20Balance(contract:Contract, address: string) {
     // 查询ERC20余额
     let balance = await contract.balanceOf(address);
     console.log(`ERC20 Balance: ${balance.toString()}`);
 }
 
-async function transferERC20(toAddress: string, amount: ethers.BigNumber) {
+async function transferERC20(contract:Contract, toAddress: string, amount: ethers.BigNumber) {
     // 转账ERC20代币
     let tx = await contract.transfer(toAddress, amount);
     // 等待交易被挖矿
     let receipt = await tx.wait();
     console.log(`Transaction hash: ${receipt.transactionHash}`);
 }
-async function approveERC20(toAddress: string, amount: ethers.BigNumber) {
+async function approveERC20(contract:Contract, toAddress: string, amount: ethers.BigNumber) {
     // 批准ERC20代币
     let tx = await contract.approve(toAddress, amount);
     // 等待交易被挖矿
@@ -57,14 +57,14 @@ async function approveERC20(toAddress: string, amount: ethers.BigNumber) {
 
 async function main() {
     //查询是否已经部署
-    //await isdepolyed(tokenAddress);
+    await isdepolyed(tokenAddress);
     // 查询某个地址的ERC20余额
-    await getERC20Balance(wallet.address);
+    await getERC20Balance(contract, "0xB831c4456629CE48e4C3786Fb453Bf5ED36be2C3");
     // 转账ERC20代币
-    //await transferERC20("0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6", ethers.utils.parseUnits("100", 18)); // 这里的数量需要根据你的代币的小数位进行调整
-    await approveERC20("0x9A676e781A523b5d0C0e43731313A708CB607508", ethers.utils.parseUnits("1000000", 18)); // 这里的数量需要根据你的代币的小数位进行调整
+    await transferERC20(contract, wallet.address, ethers.utils.parseUnits("100", 18)); // 这里的数量需要根据你的代币的小数位进行调整
+    await approveERC20(contract, wallet.address, ethers.utils.parseUnits("1000000", 18)); // 这里的数量需要根据你的代币的小数位进行调整
     // 再次查询余额
-    await getERC20Balance(wallet.address);
+    //await getERC20Balance(contract, wallet.address);
 }
 
 main().catch(console.error);

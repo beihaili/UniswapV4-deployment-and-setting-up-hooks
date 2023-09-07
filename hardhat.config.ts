@@ -32,20 +32,53 @@ export default {
     // Obtain one at https://etherscan.io/
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
+  // solidity: {
+  //   version: foundryConfig.profile.default.solc_version,
+  //   settings: {
+  //     viaIR: foundryConfig.profile.default.via_ir,
+  //     optimizer: {
+  //       enabled: true,
+  //       runs: foundryConfig.profile.default.optimizer_runs,
+  //     },
+  //     metadata: {
+  //       // do not include the metadata hash, since this is machine dependent
+  //       // and we want all generated code to be deterministic
+  //       // https://docs.soliditylang.org/en/v0.8.20/metadata.html
+  //       bytecodeHash: 'none',
+  //     },
+  //   },
+  // },
   solidity: {
-    version: foundryConfig.profile.default.solc_version,
-    settings: {
-      viaIR: foundryConfig.profile.default.via_ir,
-      optimizer: {
-        enabled: true,
-        runs: foundryConfig.profile.default.optimizer_runs,
-      },
-      metadata: {
-        // do not include the metadata hash, since this is machine dependent
-        // and we want all generated code to be deterministic
-        // https://docs.soliditylang.org/en/v0.8.20/metadata.html
-        bytecodeHash: 'none',
-      },
-    },
-  },
+    compilers: [ 
+      {
+            version: "0.8.19",
+            settings: {
+                viaIR: foundryConfig.profile.default.via_ir,
+                optimizer: {
+                    enabled: true,
+                    runs: foundryConfig.profile.default.optimizer_runs,
+                },
+                metadata: {
+                    bytecodeHash: 'none',
+                },
+                evmVersion: 'paris'
+            }
+        },
+        {
+            version: "0.8.20",
+            settings: {
+                viaIR: foundryConfig.profile.default.via_ir,
+                optimizer: {
+                    enabled: true,
+                    runs: foundryConfig.profile.default.optimizer_runs,
+                },
+                metadata: {
+                    bytecodeHash: 'none',
+                },
+                evmVersion: 'paris'
+            }
+        },
+    ],
+}
+
 }
